@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column
-from DAL.db.engine import Base
+from DAL.persistence.engine import Base
 
 
 class user(Base):

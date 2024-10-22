@@ -1,5 +1,5 @@
 from fastapi import APIRouter , Body
-from website.schema.input_model import users_model
+from website.schema.user_dto import users_model
 
 router = APIRouter(prefix="/posts")
 

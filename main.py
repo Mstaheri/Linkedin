@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from website.routers.users import router as user_router
 from website.routers.posts import router as post_router
-from DAL.db.engine import Base , engine
+from DAL.persistence.engine import Base , engine
 import uvicorn
-
 
 app = FastAPI()
 
