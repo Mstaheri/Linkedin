@@ -7,6 +7,8 @@ from BLL.application.services.users_services.users_services_query import users_s
 from typing import Annotated
 from DAL.persistence.engine import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
+from BLL.operation_result import operation_result
+from BLL.exceptions import Error_delete,incorrect_format_exception
 
 
 router = APIRouter(prefix="/users")
@@ -25,6 +27,7 @@ async def Create(db_session :Annotated[AsyncSession, Depends(get_db)],
                 model.phonenumber
             ))
     raise user.exception
+
 @router.put('/update')
 async def Update(db_session :Annotated[AsyncSession, Depends(get_db)],
                  model : users_model = Body()):

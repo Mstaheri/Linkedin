@@ -1,7 +1,7 @@
 from BLL.domain.irepository.users_irepository.users_irepository_command import users_irepository_command
 from DAL.persistence.models.user import User
 from BLL.operation_result import operation_result
-from BLL.exceptions import Errorـcreating , Error_delete , Error_get ,Error_update , successfully , successfullyـcreating
+from BLL.exceptions import Errorـcreating , Error_delete,Error_update , successfully , successfullyـcreating
 
 class users_services_command:
     def __init__(self , users :users_irepository_command):
@@ -21,8 +21,7 @@ class users_services_command:
             await self.users.create_async(user)
             return (operation_result
                     (True 
-                     ,successfullyـcreating
-                     (users_services_command.__name__)))
+                     ,successfullyـcreating(user.username)))
         except Exception as e:
             return (operation_result
                     (False 
@@ -44,7 +43,7 @@ class users_services_command:
             return (operation_result
                     (True ,
                      successfully
-                     (users_services_command.__name__ ,
+                     (user.username ,
                      users_services_command.update_async.__name__)))
         except Exception as e:
             return (operation_result
@@ -58,7 +57,7 @@ class users_services_command:
             return (operation_result
                     (True ,
                      successfully
-                     (users_services_command.__name__
+                     (username
                       ,users_services_command.delete_async.__name__)))
         
         except Exception as e:

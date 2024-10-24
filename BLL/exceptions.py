@@ -1,28 +1,44 @@
 from fastapi import HTTPException , status
 
 class successfully(HTTPException):
-    def __init__(self, entity:str , operation:str):
+    def __init__(self, id:str , operation:str):
         self.status_code = status.HTTP_200_OK
-        self.detail = f"{operation} is {entity} Successfully"
+        self.detail = f"{operation} is {id} Successfully"
 
 class successfullyـcreating(HTTPException):
-    def __init__(self, entity:str):
+    def __init__(self, id:str):
         self.status_code = status.HTTP_201_CREATED
-        self.detail = f"created is {entity} Successfully"
+        self.detail = f"created is {id} Successfully"
 
+class is_null_exception(HTTPException):
+    def __init__(self, field: str):
+        self.status_code = status.HTTP_400_BAD_REQUEST
+        self.detail = f"The {field} cannot be empty"
 
+class not_negative_exception(HTTPException):
+    def __init__(self, field: str):
+        self.status_code = status.HTTP_400_BAD_REQUEST
+        self.detail = f"The {field} must not be negative"
 
-# class messages:
-#     is_null = "The {0} cannot be empty"
-#     incorrect_format = "This format is not correct for {0}"
-#     incorrect_format_characters = "The format of the characters in the {0} is not correct"
-#     duplicate = "The {0} is duplicate"
-#     not_found = "The desired {0} was not found"
-#     not_negative_or_zero = "The {0} must not be negative or zero"
-#     not_negative = "The {0} must not be negative"
-#     not_inventory = "The balance of {0} account in Bank {1} is {2}"
-#     maximum_length = "{0} cannot be more than {1} characters"
-#     not_between_number = "The {0} number must be between {1} and {2}"
+class maximum_length_exception(HTTPException):
+    def __init__(self, field: str, max_length: int):
+        self.status_code = status.HTTP_400_BAD_REQUEST
+        self.detail = f"{field} cannot be more than {max_length} characters"
+
+class not_found_exception(HTTPException):
+    def __init__(self, item: str):
+        self.status_code = status.HTTP_404_NOT_FOUND
+        self.detail = f"The desired {item} was not found"
+
+class duplicate_exception(HTTPException):
+    def __init__(self, field: str):
+        self.status_code = status.HTTP_409_CONFLICT
+        self.detail = f"The {field} is duplicate"
+
+class incorrect_format_exception(HTTPException):
+    def __init__(self, field: str):
+        self.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+        self.detail = f"This format is not correct for {field}"
 
 class Errorـcreating(HTTPException):
     def __init__(self, entity:str , e:str):
