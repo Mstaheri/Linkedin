@@ -1,22 +1,24 @@
-from fastapi import APIRouter , Body , Depends
-from website.schema.user_dto import users_model
-from BLL.application.services.users_services.users_services_command import users_services_command
+from fastapi import APIRouter , Depends , Query  , UploadFile , File , BackgroundTasks
+from website.schema.user_dto import users_model_input  , users_model_edit_input
+from BLL.services.users_services.users_services_command import users_services_command
 from DAL.infrastructure.users_repository.users_repository_command import users_repository_command
 from DAL.infrastructure.users_repository.users_repository_query import users_repository_query
-from BLL.application.services.users_services.users_services_query import users_services_query
+from BLL.services.users_services.users_services_query import users_services_query
 from typing import Annotated
 from DAL.persistence.engine import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from BLL.operation_result import operation_result
-from BLL.exceptions import Error_delete,incorrect_format_exception
+from fastapi.security import OAuth2PasswordRequestForm
+from BLL.utils.jwt import verify_token
 
 
-router = APIRouter(prefix="/users")
+router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.post('/create')
 async def Create(db_session :Annotated[AsyncSession, Depends(get_db)],
-                 model : users_model = Body()
+                 background_tasks: BackgroundTasks,
+                 model : users_model_input = Query() , 
+                 image: Annotated[UploadFile, File(description="Upload a single file")] = None
                  ):
     user = (await users_services_command
             (users_repository_command(db_session))
@@ -24,29 +26,38 @@ async def Create(db_session :Annotated[AsyncSession, Depends(get_db)],
                 model.firstname,
                 model.lastname,
                 model.username,
-                model.phonenumber
+                model.password,
+                model.phonenumber,
+                model.email,
+                image,
+                background_tasks
             ))
     raise user.exception
 
 @router.put('/update')
 async def Update(db_session :Annotated[AsyncSession, Depends(get_db)],
-                 model : users_model = Body()):
+                 current_user: Annotated[users_model_input, Depends(verify_token)],
+                 model : users_model_edit_input = Query(),
+                 image: Annotated[UploadFile, File(description="Upload a single file")] = None
+                 ):
     user = (await users_services_command
             (users_repository_command(db_session))
             .update_async(
                 model.firstname,
                 model.lastname,
-                model.username,
-                model.phonenumber
+                current_user.username,
+                model.password,
+                model.phonenumber,
+                image
             ))
     raise user.exception
 
-@router.delete('/delete/{username}')
+@router.delete('/delete')
 async def delete(db_session :Annotated[AsyncSession, Depends(get_db)],
-                 username:str):
+                 current_user: Annotated[users_model_input, Depends(verify_token)]):
     user = (await users_services_command
             (users_repository_command(db_session))
-            .delete_async(username))
+            .delete_async(current_user.username))
     raise user.exception
 
 
@@ -69,3 +80,16 @@ async def GetAll(db_session :Annotated[AsyncSession, Depends(get_db)]):
     if  not user.is_success:
         raise user.exception
     return user.data
+
+@router.post('/token')
+async def login(db_session :Annotated[AsyncSession, Depends(get_db)],
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    user = (await users_services_query
+            (users_repository_query(db_session))
+            .login(form_data.username , form_data.password ))
+    if  not user.is_success:
+        raise user.exception
+    return {
+        "access_token": user.data,
+        "token_type": "bearer",
+    }

@@ -20,10 +20,28 @@ class not_negative_exception(HTTPException):
         self.status_code = status.HTTP_400_BAD_REQUEST
         self.detail = f"The {field} must not be negative"
 
-class maximum_length_exception(HTTPException):
-    def __init__(self, field: str, max_length: int):
-        self.status_code = status.HTTP_400_BAD_REQUEST
-        self.detail = f"{field} cannot be more than {max_length} characters"
+class username_password_incorrect(HTTPException):
+    def __init__(self,):
+        self.status_code = status.HTTP_401_UNAUTHORIZED
+        self.detail = "username or password is incorrect"
+
+class token_expired_exception(HTTPException):
+    def __init__(self):
+        self.status_code = status.HTTP_401_UNAUTHORIZED
+        self.detail = "Access denied: Your authentication token has expired"
+        headers = {"WWW-Authenticate": "Bearer"}
+
+class token_missing_exception(HTTPException):
+    def __init__(self):
+        self.status_code = status.HTTP_401_UNAUTHORIZED
+        self.detail = "Access denied: No authentication token provided"
+        headers = {"WWW-Authenticate": "Bearer"}
+
+class invalid_token_exception(HTTPException):
+    def __init__(self):
+        self.status_code = status.HTTP_401_UNAUTHORIZED
+        self.detail = "Access denied: The provided token is invalid"
+        headers = {"WWW-Authenticate": "Bearer"}
 
 class not_found_exception(HTTPException):
     def __init__(self, item: str):
@@ -59,3 +77,6 @@ class Error_get(HTTPException):
     def __init__(self, entity:str , e:str):
         self.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         self.detail = f"Error get {entity}:{e}"
+
+
+
