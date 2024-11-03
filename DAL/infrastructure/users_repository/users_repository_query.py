@@ -1,13 +1,15 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from BLL.irepository.users_irepository.users_irepository_query import users_irepository_query
+from DAL.persistence.engine import get_db
+from fastapi import Depends
+from typing import Annotated
 from DAL.persistence.models.user import User
 import sqlalchemy as sa
 from BLL.utils.secrets import pwd_context
-from BLL.exceptions import username_password_incorrect
+from BLL.exceptions import UsernamePasswordIncorrect
 
 
-class users_repository_query(users_irepository_query):
-    def __init__(self , db_session : AsyncSession):
+class UsersRepositoryQuery():
+    def __init__(self , db_session :Annotated[AsyncSession, Depends(get_db)]):
         self.db_session = db_session
     
     async def get_all_async(self):
@@ -24,12 +26,12 @@ class users_repository_query(users_irepository_query):
         return result
     
     async def login(self ,username:str , password:str)->User:
-        result = await (users_repository_query(self.db_session)
+        result = await (UsersRepositoryQuery(self.db_session)
                         .get_bycode_async(username))
         if result is None:
-            raise username_password_incorrect()
+            raise UsernamePasswordIncorrect()
         if not pwd_context.verify(password , result.password):
-            raise username_password_incorrect()
+            raise UsernamePasswordIncorrect()
         return result
         
 

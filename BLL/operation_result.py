@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from typing import Callable , TypeVar , Generic
 
 T = TypeVar('T')
-class operation_result(Generic[T]):
+class OperationResult(Generic[T]):
     def __init__(self , is_success:bool , exception:HTTPException , data = None):
         self.is_success = is_success
         self.exception = exception
@@ -10,9 +10,9 @@ class operation_result(Generic[T]):
     
     @staticmethod
     def create_validator(param : T):
-        return operation_result_extention(param)
+        return OperationResultExtention(param)
         
-class operation_result_extention:
+class OperationResultExtention:
     def __init__(self , param : T , exception:HTTPException = None ,is_success:bool = True):
         self.param = param
         self.exception = exception
@@ -22,7 +22,7 @@ class operation_result_extention:
         predicate_result = func(self.param)
         if predicate_result:
             raise exception
-        return operation_result_extention(self.param , None ,True)
+        return OperationResultExtention(self.param , None ,True)
 
     
     

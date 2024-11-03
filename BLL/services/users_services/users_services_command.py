@@ -1,99 +1,109 @@
-from BLL.irepository.users_irepository.users_irepository_command import users_irepository_command
 from DAL.persistence.models.user import User
-from BLL.operation_result import operation_result
-from BLL.exceptions import Errorـcreating , Error_delete,Error_update , successfully , successfullyـcreating
+from BLL.operation_result import OperationResult
+from BLL.exceptions import ErrorCreating , ErrorDelete,ErrorUpdate , SuccessFully , SuccessFullyCreating
 from BLL.utils.secrets import pwd_context
-from fastapi import UploadFile , BackgroundTasks
+from fastapi import UploadFile , BackgroundTasks , Depends
+from DAL.infrastructure.users_repository.users_repository_command import UsersRepositoryCommand
 from BLL.utils.email import send_email
 import os
 
-class users_services_command:
-    def __init__(self , users :users_irepository_command):
-        self.users = users
-
+class UsersServicesCommand:
+    def __init__(self ,
+                 background_tasks: BackgroundTasks , 
+                 users_repository :UsersRepositoryCommand = Depends(UsersRepositoryCommand)):
+        self.users_repository = users_repository
+        self.background_tasks = background_tasks
     async def create_async(self,
                            firstname:str, 
                            lastname:str, 
                            username:str,
                            password:str,
                            phonenumbar:str,
-                           email,
-                           image:UploadFile,
-                           backgroundTasks:BackgroundTasks
+                           email
                            ):
         try:
-            image_location = None
-            if not image is None :
-                image_location = os.path.join("/home/mst/Downloads/Linkedin/uploads",username)
             user_pwd = pwd_context.hash(password)
             user = User(firstname = firstname ,
-                     lastname = lastname,
-                     username = username,
-                     password = user_pwd,
-                       phonenumber = phonenumbar,
-                       email = email,
-                       image = image_location)
-            await self.users.create_async(user)
-            if not image_location is None :
-                with open(image_location, "wb") as f:
-                    f.write(await image.read())
+                    lastname = lastname,
+                    username = username,
+                    password = user_pwd,
+                    phonenumber = phonenumbar,
+                    image=None,
+                    email = email
+                    )
+            await self.users_repository.create_async(user)
             
             sender = os.getenv("sender_email")
             sender_password = os.getenv("sender_password")
 
-            send_email (sender , sender_password
+            self.background_tasks.add_task(send_email ,sender , sender_password
                                      , email , "سلام" , "ثبت نام شدید")
 
-            return (operation_result
-                    (True ,successfullyـcreating(user.username)))
+            return (OperationResult
+                    (True ,SuccessFullyCreating(user.username)))
         except Exception as e:
-            return (operation_result
-                    (False ,Errorـcreating
-                     (users_services_command.__name__ ,str(e))))
+            return (OperationResult
+                    (False ,ErrorCreating
+                     (UsersServicesCommand.__name__ ,str(e))))
         
     async def update_async(self,
                            firstname:str , 
                            lastname:str , 
                            username:str,
                            password:str,
+                           email,
                            phonenumbar:str,
+                           ):
+        try:
+            user = User(firstname = firstname ,
+                    lastname = lastname,
+                    username = username,
+                    password = password,
+                    email=email,
+                    phonenumber = phonenumbar,
+                    image=None)
+            await self.users.update_async(user)
+            return (OperationResult
+                    (True ,SuccessFully
+                     (user.username ,UsersServicesCommand.update_async.__name__)))
+        except Exception as e:
+            return (OperationResult
+                    (False ,ErrorUpdate
+                     (UsersServicesCommand.__name__,str(e))))
+        
+    async def update_image_async(self,
+                           username:str,
                            image:UploadFile
                            ):
         try:
             image_location = None
             if not image is None:
                 image_location = os.path.join("/home/mst/Downloads/Linkedin/uploads",username)
-            user = User(firstname = firstname ,
-                     lastname = lastname,
-                     username = username,
-                     password = password,
-                       phonenumber = phonenumbar,
-                       image=image)
-            await self.users.update_async(user)
+            await self.users.update_image_async(username , image_location)
             if not image_location is None:
                 if os.path.exists(image_location):
                     os.remove(image_location)
                 with open(image_location, "wb") as f:
                     f.write(await image.read())
-            return (operation_result
-                    (True ,successfully
-                     (user.username ,users_services_command.update_async.__name__)))
+            return (OperationResult
+                    (True ,SuccessFully
+                     (username ,UsersServicesCommand.update_image_async.__name__)))
         except Exception as e:
-            return (operation_result
-                    (False ,Error_update
-                     (users_services_command.__name__,str(e))))
+            return (OperationResult
+                    (False ,ErrorUpdate
+                     (UsersServicesCommand.__name__,str(e))))
         
     async def delete_async(self,username:str):
         try:
             await self.users.delete_async(username)
-            return (operation_result
-                    (True ,successfully
-                     (username,users_services_command.delete_async.__name__)))
+            return (OperationResult
+                    (True ,SuccessFully
+                     (username,UsersServicesCommand.delete_async.__name__)))
         
         except Exception as e:
-            return (operation_result
-                    (False ,Error_delete
-                     (users_services_command.__name__ , str(e))))
+            return (OperationResult
+                    (False ,ErrorDelete
+                     (UsersServicesCommand.__name__ , str(e))))
         
 
         
